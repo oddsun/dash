@@ -6,23 +6,24 @@ import dash.testing.wait as wait
 from dash.dash_table import DataTable
 
 columns = [dict(id=str(i), name="Column {}".format(i)) for i in range(1, 30)]
+num_rows = 100
 
 data = []
-for i in range(1, 100):
+for i in range(1, num_rows):
     datum = dict()
     data.append(datum)
     for j in columns:
         datum[j["id"]] = "{}-{}".format(i, j["id"])
 
 tooltip_data_text = []
-for i in range(1, 100):
+for i in range(1, num_rows):
     datum = dict()
     tooltip_data_text.append(datum)
     for j in columns:
         datum[j["id"]] = dict(type="text", value=";; {}-{}".format(i, j["id"]))
 
 tooltip_data_markdown = []
-for i in range(1, 100):
+for i in range(1, num_rows):
     datum = dict()
     tooltip_data_markdown.append(datum)
     for j in columns:
@@ -36,6 +37,8 @@ base_props = dict(
 def assert_aligned(cell, tooltip):
     assert tooltip.location["x"] <= (cell.location["x"] + cell.size["width"])
     assert (tooltip.location["x"] + tooltip.size["width"]) >= cell.location["x"]
+    assert (tooltip.location["y"] + 2 * tooltip.size["height"]) >= cell.location["y"]
+    assert tooltip.location["y"] <= (cell.location["y"] + 2 * cell.size["height"])
 
 
 @pytest.mark.parametrize(
@@ -88,6 +91,20 @@ def test_ttip001_displays_aligned_tooltip(test, fixed_rows, fixed_columns, ops):
     assert_aligned(cell.get(), tooltip.get())
 
     cell = target.cell(0, len(columns) - 1)
+    cell.move_to()
+    assert_aligned(cell.get(), tooltip.get())
+
+    cell = target.cell(num_rows // 2 + 1, 0)  # issue with selenium scrolling.
+    cell.move_to()
+    cell = target.cell(num_rows // 2, 2)  # issue with selenium scrolling.
+    cell.move_to()
+    cell = target.cell(num_rows // 2, 8)
+    cell.move_to()
+    assert_aligned(cell.get(), tooltip.get())
+
+    cell = target.cell(num_rows // 2 + 1, len(columns) - 1)
+    cell.move_to()
+    cell = target.cell(num_rows // 2, len(columns) - 1)
     cell.move_to()
     assert_aligned(cell.get(), tooltip.get())
     assert test.get_log_errors() == []

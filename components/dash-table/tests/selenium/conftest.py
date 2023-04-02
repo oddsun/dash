@@ -134,6 +134,8 @@ class DataTableCellFacade(object):
 
     def move_to(self):
         ac = ActionChains(self.mixin.driver)
+        ac.scroll_to_element(self._get_cell_value())  # selenium issue with scrolling
+        ac.pause(1)  # need to wait for item to load
         ac.move_to_element(self._get_cell_value())
         return ac.perform()
 
@@ -573,7 +575,7 @@ def test(request, dash_thread_server, tmpdir):
         browser=request.config.getoption("webdriver"),
         remote=request.config.getoption("remote"),
         remote_url=request.config.getoption("remote_url"),
-        headless=request.config.getoption("headless"),
+        headless=request.config.getoption("headless") or True,
         options=request.config.hook.pytest_setup_options(),
         download_path=tmpdir.mkdir("dt-download").strpath,
         percy_finalize=request.config.getoption("nopercyfinalize"),
